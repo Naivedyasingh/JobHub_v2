@@ -58,19 +58,19 @@ CREATE TABLE IF NOT EXISTS job_postings (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS job_postings (
-    id INT AUTO_INCREMENT PRIMARY KEY,  -- ⬅️ Added AUTO_INCREMENT
-    title VARCHAR(100),
-    company VARCHAR(100),
-    location VARCHAR(100),
-    salary INT,
-    type VARCHAR(50),
-    experience VARCHAR(50),
-    description TEXT,
-    requirements TEXT,
-    posted_date DATE,
-    contact VARCHAR(50)
-);
+-- CREATE TABLE IF NOT EXISTS job_postings (
+--     id INT AUTO_INCREMENT PRIMARY KEY,  -- ⬅️ Added AUTO_INCREMENT
+--     title VARCHAR(100),
+--     company VARCHAR(100),
+--     location VARCHAR(100),
+--     salary INT,
+--     type VARCHAR(50),
+--     experience VARCHAR(50),
+--     description TEXT,
+--     requirements TEXT,
+--     posted_date DATE,
+--     contact VARCHAR(50)
+-- );
 
 CREATE TABLE IF NOT EXISTS applications (
     id INT AUTO_INCREMENT PRIMARY KEY,  -- ⬅️ Added AUTO_INCREMENT
@@ -111,4 +111,15 @@ CREATE TABLE IF NOT EXISTS job_offers (
     response_date DATETIME,
     response_message TEXT,
     FOREIGN KEY (applicant_id) REFERENCES users(id) ON DELETE CASCADE
+);
+-- Add this to your db/schema.sql or run this SQL command
+
+CREATE TABLE IF NOT EXISTS congratulations_dismissed (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    job_id INT NOT NULL,
+    application_id INT NOT NULL,
+    dismissed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_dismissal (user_id, job_id, application_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );

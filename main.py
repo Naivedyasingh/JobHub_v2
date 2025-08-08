@@ -17,6 +17,9 @@ from screens.view_applications import view_applications_page
 from screens.profile import profile_page
 from screens.contact import contact_page
 from db.models import DatabaseManager, init_models
+from screens.my_job_postings import my_job_postings_page
+
+
 
 
 class StyleManager:
@@ -158,6 +161,7 @@ class PageRouter:
             "post_job": post_job_page,
             "my_applications": my_applications_page,
             "view_applications": view_applications_page,
+            "my_job_postings": my_job_postings_page, 
             "profile": profile_page,
             "contact": contact_page
         }

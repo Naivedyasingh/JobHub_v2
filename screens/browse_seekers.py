@@ -7,7 +7,6 @@ from utils.offers import get_job_offers
 from db.models import User
 from datetime import datetime as dt
 
-
 class DateHelper:
     """Handles date parsing and validation operations."""
     
@@ -20,7 +19,6 @@ class DateHelper:
             return dt.fromisoformat(str(date_value))
         except (ValueError, TypeError):
             return dt.now()
-
 
 class SkillsProcessor:
     """Handles processing and parsing of skills data."""
@@ -50,7 +48,6 @@ class SkillsProcessor:
             return [s.strip() for s in value.split(",") if s.strip()]
         return []
 
-
 class JobSeekersDataManager:
     """Handles data operations for job seekers."""
     
@@ -72,7 +69,6 @@ class JobSeekersDataManager:
             skills = self.skills_processor.split_skills(seeker.get("job_types"))
             seeker_skills_set.update(s.strip().title() for s in skills if s.strip())
         return seeker_skills_set
-
 
 class JobSeekersFilter:
     """Handles filtering logic for job seekers."""
@@ -108,6 +104,46 @@ class JobSeekersFilter:
         filtered = self.apply_availability_filter(filtered, avail_filter)
         return filtered
 
+class OfferStatusManager:
+    """Handles offer status and timing logic."""
+    
+    def __init__(self):
+        self.date_helper = DateHelper()
+    
+    def get_recent_offer_info(self, all_offers, employer_id, seeker_id):
+        """Get information about recent offers between employer and seeker."""
+        for offer in all_offers:
+            if (str(offer.get("employer_id")) == str(employer_id) and 
+                str(offer.get("job_seeker_id")) == str(seeker_id)):
+                
+                offer_date = self.date_helper.safe_parse_date(offer.get("offered_date"))
+                time_delta = datetime.datetime.now() - offer_date
+                offer_status = offer.get("status", "pending")
+                
+                return {
+                    'exists': True,
+                    'time_delta': time_delta,
+                    'status': offer_status,
+                    'hours_ago': int(time_delta.total_seconds() // 3600),
+                    'days_ago': time_delta.days,
+                    'is_expired': time_delta.total_seconds() > 24 * 3600,  # > 1 day
+                    'is_pending': offer_status == "pending"
+                }
+        
+        return {'exists': False}
+    
+    def should_disable_offer_button(self, offer_info):
+        """Determine if offer button should be disabled."""
+        if not offer_info['exists']:
+            return False  # No recent offer, enable button
+        
+        if not offer_info['is_pending']:
+            return False  # Offer was responded to, enable button
+        
+        if offer_info['is_expired']:
+            return False  # Offer expired (>24h), enable button
+        
+        return True  # Recent pending offer exists, disable button
 
 class JobSeekersRenderer:
     """Handles rendering of job seekers UI components."""
@@ -115,6 +151,7 @@ class JobSeekersRenderer:
     def __init__(self):
         self.date_helper = DateHelper()
         self.skills_processor = SkillsProcessor()
+        self.offer_manager = OfferStatusManager()  # ← NEW
     
     def render_header(self):
         """Render page header."""
@@ -199,19 +236,14 @@ class JobSeekersRenderer:
         )
     
     def render_action_buttons(self, seeker, user, all_offers):
-        """Render action buttons for each seeker."""
+        """Render action buttons for each seeker with improved offer logic."""
         status = seeker.get("availability_status", "available")
         
-        # Check for recent offers
-        recent = None
-        for o in all_offers:
-            if o.get("employer_id") == user["id"] and o.get("job_seeker_id") == seeker["id"]:
-                odt = self.date_helper.safe_parse_date(o.get("offered_date"))
-                delta = datetime.datetime.now() - odt
-                if delta.total_seconds() < 24 * 3600:
-                    recent = delta
-                    break
-
+        # Get offer information using the new manager
+        offer_info = self.offer_manager.get_recent_offer_info(
+            all_offers, user["id"], seeker["id"]
+        )
+        
         action_col1, action_col2 = st.columns(2)
 
         with action_col1:
@@ -223,17 +255,37 @@ class JobSeekersRenderer:
                     key=f"disabled_{seeker['id']}",
                 )
             else:
-                if recent:
-                    hrs = int(recent.total_seconds() // 3600)
-                    st.button(
-                        f"⌛ Offered ({hrs}h ago)",
-                        disabled=True,
-                        use_container_width=True,
-                        key=f"recent_{seeker['id']}",
-                    )
+                should_disable = self.offer_manager.should_disable_offer_button(offer_info)
+                
+                if should_disable:
+                    # Show time-based message for recent pending offers
+                    if offer_info['hours_ago'] < 24:
+                        st.button(
+                            f"⌛ Offered ({offer_info['hours_ago']}h ago)",
+                            disabled=True,
+                            use_container_width=True,
+                            key=f"recent_{seeker['id']}",
+                            help="Wait 24 hours before sending another offer"
+                        )
+                    else:
+                        # This shouldn't happen due to logic, but safety fallback
+                        st.button(
+                            "💼 Offer Job",
+                            type="primary",
+                            use_container_width=True,
+                            key=f"offer_{seeker['id']}",
+                        )
                 else:
+                    # Show different button text based on offer history
+                    button_text = "💼 Offer Job"
+                    if offer_info['exists']:
+                        if offer_info['is_expired']:
+                            button_text = "🔄 Offer Again"  # Previous offer expired
+                        elif not offer_info['is_pending']:
+                            button_text = "🔄 New Offer"    # Previous offer was responded to
+                    
                     if st.button(
-                        "💼 Offer Job",
+                        button_text,
                         type="primary",
                         use_container_width=True,
                         key=f"offer_{seeker['id']}",
@@ -293,7 +345,6 @@ class JobSeekersRenderer:
                     self.render_action_buttons(seeker, user, all_offers)
                     self.render_seeker_details(seeker)
 
-
 class BrowseJobSeekersPage:
     """Main controller for browse job seekers page."""
     
@@ -334,23 +385,19 @@ class BrowseJobSeekersPage:
         # Render seekers grid
         self.renderer.render_seekers_grid(filtered_seekers, user, all_offers)
 
-
 # Preserve original function signatures - NO CHANGES to existing code needed
 def safe_parse_date(date_value):
     """Wrapper function to maintain backward compatibility."""
     return DateHelper.safe_parse_date(date_value)
 
-
 def split_skills(value):
     """Wrapper function to maintain backward compatibility."""
     return SkillsProcessor.split_skills(value)
-
 
 def get_job_seekers():
     """Wrapper function to maintain backward compatibility."""
     manager = JobSeekersDataManager()
     return manager.get_job_seekers()
-
 
 def browse_job_seekers_page():
     """Original function - now uses OOP internally but maintains exact same behavior."""

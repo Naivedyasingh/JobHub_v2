@@ -6,7 +6,6 @@ from utils.applications import get_job_applications
 from utils.auth import calculate_profile_completion
 from db.models import JobPosting
 
-
 class HireDashboardRenderer:
     """Handles rendering of hire dashboard UI components."""
     
@@ -31,8 +30,8 @@ class HireDashboardRenderer:
                 st.session_state.page = "view_applications"
                 st.rerun()
         with col4:
-            if st.button("📊 My Jobs", use_container_width=True, key="hire_my_jobs"):
-                st.session_state.page = "my_job_postings"
+            if st.button("📊 My Job Posts", use_container_width=True, key="hire_my_job_posts"):
+                st.session_state.page = "my_job_postings"  # Navigate to new page
                 st.rerun()
     
     def render_company_stats(self, stats_data):
@@ -86,17 +85,25 @@ class HireDashboardRenderer:
             </div>
         """, unsafe_allow_html=True)
     
-    def render_recent_applications(self, recent_applications):
-        """Render recent applications section."""
-        st.markdown("---")
-        st.subheader("📨 Recent Applications")
+    def render_recent_applications_section(self, recent_applications):
+        """Render recent applications section without tabs."""
+        st.markdown("### 📨 Recent Applications")
         
         if recent_applications:
+            st.markdown("Latest applications across all your jobs:")
             for app in recent_applications:
                 self.render_application_card(app)
+                
+            # Show more button
+            if len(recent_applications) >= 3:
+                if st.button("📋 View All Applications", use_container_width=True):
+                    st.session_state.page = "view_applications"
+                    st.rerun()
         else:
-            st.info("No applications received yet.")
-
+            st.info("No applications received yet. Post some jobs to start receiving applications!")
+            if st.button("📝 Post Your First Job", use_container_width=True):
+                st.session_state.page = "post_job"
+                st.rerun()
 
 class HireDataManager:
     """Handles data operations for hire dashboard."""
@@ -145,7 +152,6 @@ class HireDataManager:
             reverse=True
         )[:limit]
 
-
 class HireDashboard:
     """Main hire dashboard controller that orchestrates all dashboard components."""
     
@@ -180,13 +186,14 @@ class HireDashboard:
         # Render company stats
         self.renderer.render_company_stats(stats_data)
 
-        # Get and render recent applications
-        recent_applications = self.data_manager.get_recent_applications(my_applications)
-        self.renderer.render_recent_applications(recent_applications)
+        st.markdown("---")
 
+        # Get recent applications and render them directly (no tabs)
+        recent_applications = self.data_manager.get_recent_applications(my_applications)
+        self.renderer.render_recent_applications_section(recent_applications)
 
 # Preserve the original function signature - NO CHANGES to existing code needed
 def hire_dashboard():
     """Original function - now uses OOP internally but maintains exact same behavior."""
-    dashboard = HireDashboard()
+    dashboard = HireDashboard() 
     dashboard.display()

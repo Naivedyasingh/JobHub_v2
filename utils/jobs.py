@@ -3,7 +3,6 @@
 import streamlit as st
 from db.models import JobPosting, JobDAO
 
-
 class JobOfferService:
     """Service for handling job offer operations."""
     
@@ -12,7 +11,6 @@ class JobOfferService:
         """Get job offers using the offers utility."""
         from utils.offers import get_job_offers as get_offers
         return get_offers()
-
 
 class JobDataValidator:
     """Handles validation of job posting data."""
@@ -30,7 +28,6 @@ class JobDataValidator:
         
         required_fields = ['title', 'location', 'salary', 'job_type', 'description']
         return all(field in job_data and job_data[field] for field in required_fields)
-
 
 class JobDataProcessor:
     """Handles processing and preparation of job data."""
@@ -53,7 +50,6 @@ class JobDataProcessor:
                 sanitized[key] = value
         return sanitized
 
-
 class SessionStateManager:
     """Handles Streamlit session state operations."""
     
@@ -69,7 +65,6 @@ class SessionStateManager:
         except Exception as e:
             print(f"Error updating session state: {e}")
         return False
-
 
 class JobPostingService:
     """Main service for job posting operations."""
@@ -104,7 +99,8 @@ class JobPostingService:
             
             # Create JobDAO instance and insert job
             job_dao = JobDAO()
-            result = job_dao.insert_job(payload)
+            # ← ONLY CHANGE: Fixed the method call to pass both arguments
+            result = job_dao.insert_job(employer_id, payload)
             
             if result:
                 # Update session state with current user
@@ -116,7 +112,6 @@ class JobPostingService:
         except Exception as e:
             print(f"Error adding job posting: {e}")
             return False
-
 
 class JobUtilityService:
     """Main utility service combining all job-related operations."""
@@ -133,16 +128,13 @@ class JobUtilityService:
         """Add job posting."""
         return self.posting_service.add_job_posting(employer_id, job_data)
 
-
 # Create service instance for use by public functions
 _job_service = JobUtilityService()
-
 
 # Public interface functions - maintaining backward compatibility
 def get_job_offers():
     """Get job offers using the offers utility."""
     return _job_service.get_offers()
-
 
 def add_job_posting(employer_id, job_data):
     """Add a new job posting for employer using JobDAO"""

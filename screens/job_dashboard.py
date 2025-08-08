@@ -1,4 +1,5 @@
 # pages/job_dashboard.py
+
 import time
 import streamlit as st
 from datetime import datetime, timedelta
@@ -11,6 +12,166 @@ from utils.auth import calculate_profile_completion
 from db.models import User, JobPosting
 from typing import List, Dict
 
+class CongratsStorage:
+    """Handles permanent storage of congratulations dismissals in database."""
+    
+    def __init__(self):
+        self.user_model = User
+    
+    def is_dismissed(self, user_id, job_id, app_id):
+        """Check if congratulations for this job+application has been dismissed."""
+        try:
+            with self.user_model.db.cursor() as cur:
+                cur.execute("""
+                    SELECT id FROM congratulations_dismissed 
+                    WHERE user_id=%s AND job_id=%s AND application_id=%s
+                """, (user_id, job_id, app_id))
+                return cur.fetchone() is not None
+        except Exception as e:
+            print(f"[DB] Error checking dismissal: {e}")
+            return False
+    
+    def mark_dismissed(self, user_id, job_id, app_id):
+        """Permanently mark congratulations as dismissed in database."""
+        try:
+            with self.user_model.db.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO congratulations_dismissed (user_id, job_id, application_id, dismissed_at)
+                    VALUES (%s, %s, %s, NOW())
+                    ON DUPLICATE KEY UPDATE dismissed_at = NOW()
+                """, (user_id, job_id, app_id))
+                return True
+        except Exception as e:
+            print(f"[DB] Error marking dismissal: {e}")
+            return False
+
+class HiredNotificationManager:
+    """Handles congratulations notifications for newly hired job seekers."""
+    
+    def __init__(self):
+        self.storage = CongratsStorage()
+    
+    def get_new_accepted_applications(self, user_id):
+        """Get applications that were recently accepted but not yet congratulated."""
+        all_applications = get_job_applications()
+        user_applications = [
+            app for app in all_applications 
+            if str(app.get("applicant_id")) == str(user_id) and app.get("status") == "accepted"
+        ]
+        
+        new_accepted = []
+        
+        for app in user_applications:
+            job_id = app.get('job_id', 0)
+            app_id = app.get('id', 0)
+            
+            # ← FIXED: Check database instead of session state
+            if not self.storage.is_dismissed(user_id, job_id, app_id):
+                response_date = app.get("response_date")
+                if response_date:
+                    try:
+                        if isinstance(response_date, str):
+                            response_dt = datetime.fromisoformat(response_date.replace("Z", "+00:00"))
+                        else:
+                            response_dt = response_date
+                        
+                        time_diff = datetime.now() - response_dt
+                        
+                        # Only show if accepted recently (within 7 days) and not dismissed
+                        if time_diff.total_seconds() <= 7 * 24 * 3600:  # Within 7 days
+                            new_accepted.append({
+                                'job_title': app.get('job_title', 'Job Position'),
+                                'employer_name': app.get('employer_name', 'Employer'),
+                                'job_id': job_id,
+                                'application_id': app_id,
+                                'hours_ago': int(time_diff.total_seconds() // 3600),
+                                'minutes_ago': int((time_diff.total_seconds() % 3600) // 60),
+                                'days_ago': time_diff.days
+                            })
+                    except Exception as e:
+                        continue
+        
+        return new_accepted
+    
+    def show_congratulations_popup(self, accepted_jobs, user_id):
+        """Display congratulations popup for newly accepted applications."""
+        if not accepted_jobs:
+            return
+        
+        # Show popup for each job that hasn't been dismissed
+        for idx, job in enumerate(accepted_jobs):
+            job_title = job['job_title']
+            employer_name = job['employer_name']
+            job_id = job.get('job_id', 0)
+            app_id = job.get('application_id', 0)
+            
+            # Format time display
+            if job['days_ago'] > 0:
+                time_text = f"{job['days_ago']} day{'s' if job['days_ago'] > 1 else ''} ago"
+            elif job['hours_ago'] > 0:
+                time_text = f"{job['hours_ago']} hour{'s' if job['hours_ago'] > 1 else ''} ago"
+            else:
+                time_text = f"{job['minutes_ago']} minute{'s' if job['minutes_ago'] > 1 else ''} ago"
+            
+            # Create celebration popup
+            st.balloons()  # Show balloons animation
+            
+            with st.container():
+                st.markdown(f"""
+                    <div style="
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        border-radius: 20px;
+                        padding: 30px;
+                        margin: 20px 0;
+                        text-align: center;
+                        color: white;
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                        border: 3px solid #ffd700;
+                        animation: pulse 2s infinite;
+                        position: relative;
+                    ">
+                        <h1 style="margin: 0; font-size: 2.5rem;">🎉 CONGRATULATIONS! 🎉</h1>
+                        <h2 style="margin: 10px 0; color: #ffd700;">You Got Hired!</h2>
+                        <div style="background: rgba(255,255,255,0.2); border-radius: 10px; padding: 20px; margin: 20px 0;">
+                            <h3 style="margin: 0; color: #fff;">{job_title}</h3>
+                            <p style="margin: 5px 0; font-size: 1.2rem;">at <strong>{employer_name}</strong></p>
+                            <p style="margin: 5px 0; color: #ffd700;">Accepted {time_text}</p>
+                        </div>
+                        <p style="margin: 20px 0; font-size: 1.1rem;">
+                            🌟 Your hard work paid off! Welcome to your new opportunity! 🌟
+                        </p>
+                        <div style="background: rgba(255,255,255,0.1); border-radius: 10px; padding: 10px; margin: 10px 0;">
+                            <small style="color: #ffd700;">💡 This notification will not appear again after dismissal</small>
+                        </div>
+                    </div>
+                    
+                    <style>
+                    @keyframes pulse {{
+                        0% {{ transform: scale(1); }}
+                        50% {{ transform: scale(1.05); }}
+                        100% {{ transform: scale(1); }}
+                    }}
+                    </style>
+                """, unsafe_allow_html=True)
+                
+                # Dismissal button with permanent database storage
+                col1, col2, col3 = st.columns([1, 2, 1])
+                with col2:
+                    unique_key = f"dismiss_congrats_{job_id}_{app_id}_{idx}"
+                    
+                    if st.button("🎊 Thank You! Got It!", 
+                               use_container_width=True, 
+                               type="primary",
+                               key=unique_key):
+                        # ← FIXED: Store dismissal in database permanently
+                        if self.storage.mark_dismissed(user_id, job_id, app_id):
+                            st.success("✅ Congratulations noted! This notification won't appear again.")
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error("❌ Error saving dismissal. Please try again.")
+                
+                st.markdown("---")
 
 class JobSkillsFormatter:
     """Handles formatting of user skills and job types."""
@@ -28,7 +189,6 @@ class JobSkillsFormatter:
             job_types = []
         return ", ".join(job_types)
 
-
 class JobDataManager:
     """Handles fetching and processing of job data from database."""
     
@@ -45,6 +205,8 @@ class JobDataManager:
                 FROM job_postings jp
                 JOIN users u ON jp.user_id = u.id
                 WHERE jp.status = 'active'
+                AND (jp.is_closed = FALSE OR jp.is_closed IS NULL)
+                AND (jp.hired_count < jp.required_candidates OR jp.hired_count IS NULL OR jp.required_candidates IS NULL)
                 """
             )
             rows = cur.fetchall()
@@ -64,7 +226,6 @@ class JobDataManager:
             }
             jobs.append(job)
         return jobs
-
 
 class JobOfferManager:
     """Handles job offer operations and status management."""
@@ -122,7 +283,6 @@ class JobOfferManager:
             
         return max(0, int((expires - datetime.now()).total_seconds() // 3600))
 
-
 class JobFilterManager:
     """Handles job filtering and categorization logic."""
     
@@ -176,7 +336,6 @@ class JobFilterManager:
             and (salary_range[0] <= (job.get("salary", 0) or 0) <= salary_range[1])
         ]
 
-
 class JobApplicationManager:
     """Handles job application operations and status management."""
     
@@ -218,7 +377,6 @@ class JobApplicationManager:
             "status": "pending",
         }
 
-
 class JobDashboardRenderer:
     """Handles rendering of job dashboard UI components."""
     
@@ -226,6 +384,7 @@ class JobDashboardRenderer:
         self.offer_manager = JobOfferManager()
         self.filter_manager = JobFilterManager()
         self.application_manager = JobApplicationManager()
+        self.notification_manager = HiredNotificationManager()
     
     def render_header(self, user):
         """Render dashboard header with user greeting."""
@@ -239,6 +398,12 @@ class JobDashboardRenderer:
             unsafe_allow_html=True,
         )
         st.markdown("---")
+    
+    def render_congratulations_section(self, user_id):
+        """Render congratulations popup for recent hires that haven't been dismissed."""
+        new_accepted = self.notification_manager.get_new_accepted_applications(user_id)
+        if new_accepted:
+            self.notification_manager.show_congratulations_popup(new_accepted, user_id)  # ← Pass user_id
     
     def render_profile_completion_warning(self, completion):
         """Render profile completion warning if profile is incomplete."""
@@ -381,7 +546,6 @@ class JobDashboardRenderer:
             else:
                 st.info("🙌 You have not applied for any jobs yet.")
 
-
 class JobDashboard:
     """Main job dashboard controller that orchestrates all dashboard components."""
     
@@ -395,6 +559,9 @@ class JobDashboard:
         """Main method to display the complete job dashboard."""
         user = st.session_state.current_user
         completion = calculate_profile_completion(user)
+
+        # Show congratulations popup first (only for new hires that haven't been dismissed)
+        self.renderer.render_congratulations_section(user["id"])
 
         # Render header
         self.renderer.render_header(user)
@@ -431,18 +598,15 @@ class JobDashboard:
         # Render job tabs
         self.renderer.render_job_tabs(applied_jobs, not_applied_jobs, user)
 
-
 # Preserve original function signatures - NO CHANGES to existing code needed
 def format_user_skills(job_types):
     """Wrapper function to maintain backward compatibility."""
     return JobSkillsFormatter.format_user_skills(job_types)
 
-
 def _fetch_employer_jobs() -> List[Dict]:
     """Wrapper function to maintain backward compatibility."""
     manager = JobDataManager()
     return manager.fetch_employer_jobs()
-
 
 def job_dashboard():
     """Original function - now uses OOP internally but maintains exact same behavior."""

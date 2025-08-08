@@ -18,6 +18,11 @@ class JobFormValidator:
     def validate_salary_range(salary):
         """Validate salary is within acceptable range."""
         return 5_000 <= salary <= 100_000
+    
+    @staticmethod
+    def validate_candidate_count(required_candidates):
+        """Validate required candidates count."""
+        return 1 <= required_candidates <= 50
 
 
 class JobDataManager:
@@ -37,6 +42,10 @@ class JobDataManager:
             "description": form_data["description"].strip(),
             "requirements": form_data["requirements"].strip(),
             "benefits": form_data["benefits"].strip(),
+            "required_candidates": form_data["required_candidates"],
+            "hired_count": 0,
+            "is_closed": False,
+            "auto_closed": False,
         }
     
     def save_job_posting(self, user_id, job_data):
@@ -73,6 +82,16 @@ class PostJobFormRenderer:
             urgency = st.selectbox("Urgency Level", self.urgency_levels)
             contract_type = st.selectbox("Contract Type", self.contract_types)
         
+        # Add hiring requirements section
+        st.markdown("### 👥 Hiring Requirements")
+        required_candidates = st.number_input(
+            "Number of candidates needed",
+            min_value=1,
+            max_value=50,
+            value=1,
+            help="How many people do you want to hire for this position?"
+        )
+        
         return {
             "job_title": job_title,
             "location": location,
@@ -81,7 +100,8 @@ class PostJobFormRenderer:
             "experience": experience,
             "working_hours": working_hours,
             "urgency": urgency,
-            "contract_type": contract_type
+            "contract_type": contract_type,
+            "required_candidates": required_candidates
         }
     
     def render_description_fields(self):
@@ -156,6 +176,10 @@ class PostJobRenderer:
         """Display validation error message."""
         st.error("Please fill all required fields marked with *")
     
+    def show_candidate_count_error(self):
+        """Display candidate count validation error."""
+        st.error("Number of candidates must be between 1 and 50")
+    
     def show_save_error(self):
         """Display save error message."""
         st.error("Failed to post job. Please try again.")
@@ -209,6 +233,11 @@ class PostJobPage:
             form_data["description"]
         ):
             self.renderer.show_validation_error()
+            return False
+        
+        # Validate candidate count
+        if not self.validator.validate_candidate_count(form_data["required_candidates"]):
+            self.renderer.show_candidate_count_error()
             return False
         
         # Set posting state
