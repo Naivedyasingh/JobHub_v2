@@ -153,7 +153,9 @@ class HomePage:
     def _render_platform_stats(self):
         """Render platform statistics section."""
         st.markdown("\n")
-        st.markdown("".join(["─"] * 97))
+        st.markdown("""
+        <hr style="width: 100%; height: 2px; background-color: #444; border: none; margin: 1.5rem 0; border-radius: 2px;">
+        """, unsafe_allow_html=True)
         
         # Get platform statistics from database
         job_seekers_count, employers_count, cities_count, skills_count = self.platform_stats.get_stats()
@@ -174,7 +176,9 @@ class HomePage:
     
     def _render_impact_section(self):
         """Render the impact comparison section."""
-        st.markdown("".join(["─"] * 97))
+        st.markdown("""
+        <hr style="width: 100%; height: 2px; background-color: #444; border: none; margin: 1.5rem 0; border-radius: 2px;">
+        """, unsafe_allow_html=True)
         st.markdown("### 🔄 **Our Impact on Employment**")
         
         col1, col2 = st.columns(2)
@@ -185,7 +189,9 @@ class HomePage:
     
     def _render_growth_section(self):
         """Render the platform growth section."""
-        st.markdown("".join(["─"] * 97))
+        st.markdown("""
+        <hr style="width: 100%; height: 2px; background-color: #444; border: none; margin: 1.5rem 0; border-radius: 2px;">
+        """, unsafe_allow_html=True)
         st.markdown("\n### 🎉 **Platform Growth**")
         
         job_seekers_count, employers_count, cities_count, skills_count = self.platform_stats.get_stats()
@@ -201,7 +207,9 @@ class HomePage:
     
     def _render_footer(self):
         """Render the footer section."""
-        st.markdown("".join(["─"] * 97))
+        st.markdown("""
+        <hr style="width: 100%; height: 2px; background-color: #444; border: none; margin: 1.5rem 0; border-radius: 2px;">
+        """, unsafe_allow_html=True)
         st.markdown("""
         <div style='text-align: center; color: #333; font-size: 0.9rem;'>
             💡 <strong>Why Choose JobConnect?</strong><br>
@@ -212,6 +220,12 @@ class HomePage:
             </span>
         </div>
         """, unsafe_allow_html=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        _, col2, _ = st.columns([2, 1, 2])
+        with col2:
+            if st.button("📞 Visit Contact Page", use_container_width=True, type="primary"):
+                st.session_state.page = "contact"
+                st.rerun()
     
     def display(self):
         """Main method to display the complete home page."""

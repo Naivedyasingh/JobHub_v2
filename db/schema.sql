@@ -2,7 +2,7 @@ CREATE DATABASE IF NOT EXISTS jobhub_db;
 USE jobhub_db;
 
 CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,  -- ⬅️ Added AUTO_INCREMENT
+    id INT AUTO_INCREMENT PRIMARY KEY, 
     role VARCHAR(10),
     name VARCHAR(100),
     phone VARCHAR(15),
@@ -13,10 +13,10 @@ CREATE TABLE IF NOT EXISTS users (
     experience VARCHAR(50),
     availability_status VARCHAR(20),
     expected_salary INT,
-    job_types JSON,                      -- ⬅️ MISSING - Used in home.py, profile.py, job_dashboard.py
-    availability JSON,                   -- ⬅️ MISSING - Used in profile.py
-    languages JSON,                      -- ⬅️ MISSING - Used in profile.py
-    education VARCHAR(100),              -- ⬅️ MISSING - Used in profile.py
+    job_types JSON,             
+    availability JSON,          
+    languages JSON,             
+    education VARCHAR(100),     
     company_name VARCHAR(100),
     company_type VARCHAR(50),
     company_address VARCHAR(255),
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS job_postings (
-    id INT AUTO_INCREMENT PRIMARY KEY,  -- ⬅️ Added AUTO_INCREMENT
+    id INT AUTO_INCREMENT PRIMARY KEY,  
     user_id INT,
     title VARCHAR(100),
     location VARCHAR(100),
@@ -58,22 +58,8 @@ CREATE TABLE IF NOT EXISTS job_postings (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- CREATE TABLE IF NOT EXISTS job_postings (
---     id INT AUTO_INCREMENT PRIMARY KEY,  -- ⬅️ Added AUTO_INCREMENT
---     title VARCHAR(100),
---     company VARCHAR(100),
---     location VARCHAR(100),
---     salary INT,
---     type VARCHAR(50),
---     experience VARCHAR(50),
---     description TEXT,
---     requirements TEXT,
---     posted_date DATE,
---     contact VARCHAR(50)
--- );
-
 CREATE TABLE IF NOT EXISTS applications (
-    id INT AUTO_INCREMENT PRIMARY KEY,  -- ⬅️ Added AUTO_INCREMENT
+    id INT AUTO_INCREMENT PRIMARY KEY,  
     job_id INT,
     job_title VARCHAR(100),
     employer_id VARCHAR(100),
@@ -93,7 +79,7 @@ CREATE TABLE IF NOT EXISTS applications (
 );
 
 CREATE TABLE IF NOT EXISTS job_offers (
-    id INT AUTO_INCREMENT PRIMARY KEY,  -- ⬅️ Added AUTO_INCREMENT
+    id INT AUTO_INCREMENT PRIMARY KEY,  
     job_id INT,
     job_title VARCHAR(100),
     employer_id VARCHAR(100),
@@ -112,7 +98,7 @@ CREATE TABLE IF NOT EXISTS job_offers (
     response_message TEXT,
     FOREIGN KEY (applicant_id) REFERENCES users(id) ON DELETE CASCADE
 );
--- Add this to your db/schema.sql or run this SQL command
+
 
 CREATE TABLE IF NOT EXISTS congratulations_dismissed (
     id INT AUTO_INCREMENT PRIMARY KEY,

@@ -67,7 +67,7 @@ class JobSeekerFormRenderer:
             date_of_birth = st.date_input("Date of Birth", key="profile_dob")
         
         return {
-            'name': name, 'phone': phone, 'email': email, 'gender': gender, 'aadhaar': aadhaar
+            'name': name, 'phone': phone, 'email': email, 'gender': gender, 'aadhaar': aadhaar,
         }
     
     def render_professional_info_tab(self, user):

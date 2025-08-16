@@ -31,7 +31,7 @@ class HireDashboardRenderer:
                 st.rerun()
         with col4:
             if st.button("📊 My Job Posts", use_container_width=True, key="hire_my_job_posts"):
-                st.session_state.page = "my_job_postings"  # Navigate to new page
+                st.session_state.page = "my_job_postings"  
                 st.rerun()
     
     def render_company_stats(self, stats_data):
