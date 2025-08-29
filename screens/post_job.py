@@ -82,7 +82,6 @@ class PostJobFormRenderer:
             urgency = st.selectbox("Urgency Level", self.urgency_levels)
             contract_type = st.selectbox("Contract Type", self.contract_types)
         
-        # Add hiring requirements section
         st.markdown("### 👥 Hiring Requirements")
         required_candidates = st.number_input(
             "Number of candidates needed",
@@ -146,16 +145,9 @@ class PostJobRenderer:
     def render_job_form(self, is_posting):
         """Render the complete job posting form."""
         with st.form("job_posting_form"):
-            # Render basic fields
             basic_data = self.form_renderer.render_basic_fields()
-            
-            # Render description fields
             description_data = self.form_renderer.render_description_fields()
-            
-            # Render submit button
             submitted = self.form_renderer.render_submit_button(is_posting)
-            
-            # Combine all form data
             form_data = {**basic_data, **description_data, "submitted": submitted}
             return form_data
     
@@ -226,7 +218,6 @@ class PostJobPage:
     
     def _handle_form_submission(self, form_data, user):
         """Handle the job posting form submission."""
-        # Validate required fields
         if not self.validator.validate_required_fields(
             form_data["job_title"], 
             form_data["location"], 
@@ -235,18 +226,13 @@ class PostJobPage:
             self.renderer.show_validation_error()
             return False
         
-        # Validate candidate count
         if not self.validator.validate_candidate_count(form_data["required_candidates"]):
             self.renderer.show_candidate_count_error()
             return False
-        
-        # Set posting state
         self.session_manager.set_posting_state(True)
         
-        # Create job data
         job_data = self.data_manager.create_job_data(form_data)
         
-        # Save job posting
         if self.data_manager.save_job_posting(user["id"], job_data):
             self.renderer.show_success_message()
             self.session_manager.redirect_to_dashboard()
@@ -260,23 +246,13 @@ class PostJobPage:
         """Main method to display the complete post job page."""
         user = st.session_state.current_user
         
-        # Initialize page state
         self.session_manager.initialize_page_state()
-        
-        # Render header
         self.renderer.render_header()
-        
-        # Get posting state
         is_posting = self.session_manager.get_posting_state()
-        
-        # Render form
         form_data = self.renderer.render_job_form(is_posting)
         
-        # Handle form submission
         if form_data["submitted"]:
             self._handle_form_submission(form_data, user)
-        
-        # Render navigation
         self.renderer.render_navigation()
 
 

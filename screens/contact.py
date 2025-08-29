@@ -1,5 +1,3 @@
-# pages/contact.py
-
 import streamlit as st
 from datetime import datetime
 
@@ -300,8 +298,6 @@ class ContactPageRenderer:
         st.markdown("---")
         st.markdown("### 💡 Feedback & Suggestions")
         st.markdown("Help us improve JobConnect by sharing your valuable feedback!")
-        
-        # Check if enough time has passed to reset form (optional - 5 minutes)
         self.session_manager.check_and_reset_feedback_form()
         
         with st.form("feedback_form"):
@@ -355,8 +351,6 @@ class ContactPageRenderer:
                         st.error("Failed to submit feedback. Please try again.")
                 else:
                     st.error("Please provide your feedback message")
-        
-        # Reset button for feedback form (optional)
         if st.session_state.feedback_submitted:
             st.markdown("---")
             col1, col2, col3 = st.columns([1, 1, 1])
@@ -406,11 +400,9 @@ class ContactPage:
         self.renderer = ContactPageRenderer()
     
     def display(self):
-        """Main method to display the complete contact page."""
-        # Render header
+        """Main method to display the complete contact page."""  
         self.renderer.render_header()
         
-        # Main contact section
         col1, col2 = st.columns(2)
         
         with col1:
@@ -419,13 +411,10 @@ class ContactPage:
         with col2:
             self.renderer.render_contact_form()
         
-        # Additional sections
         self.renderer.render_reviews_section()
         self.renderer.render_feedback_section()
         self.renderer.render_faq_section()
 
-
-# Preserve the original function signature - NO CHANGES to existing code needed
 def contact_page():
     """Original function - now uses OOP internally but maintains exact same behavior."""
     page = ContactPage()

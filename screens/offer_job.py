@@ -1,5 +1,3 @@
-# pages/offer_job.py
-
 import time
 import streamlit as st
 from datetime import datetime, timedelta
@@ -57,17 +55,14 @@ class OfferDataManager:
             "working_hours": form_data["working_hours"],
             "start_date": str(form_data["start_date"]),
             "personal_message": form_data["personal_message"].strip(),
-            # employer
             "employer_id": user["id"],
             "employer_name": user.get("company_name", user["name"]),
             "employer_phone": user["phone"],
             "employer_email": user["email"],
-            # candidate
             "job_seeker_id": candidate["id"],
             "job_seeker_name": candidate["name"],
             "job_seeker_phone": candidate["phone"],
             "job_seeker_email": candidate["email"],
-            # timestamps
             "offered_date": now,
             "expires_at": expires_at,
             "status": "pending",
@@ -214,7 +209,6 @@ class OfferJobPage:
             self.renderer.show_validation_error()
             return False
         
-        # Create and save offer data
         offer_data = self.data_manager.create_offer_data(form_data, user, candidate)
         
         if self.data_manager.save_offer(offer_data):
@@ -238,30 +232,19 @@ class OfferJobPage:
         user = st.session_state.current_user
         candidate = st.session_state.get("selected_candidate")
 
-        # Validate candidate selection
         if not candidate:
             st.error("No candidate selected")
             return
 
-        # Render header
         self.renderer.render_header(candidate['name'])
-
-        # Render candidate summary
         self.renderer.render_candidate_summary(candidate)
         st.markdown("---")
-
-        # Render offer form
         form_data = self.renderer.render_offer_form(user, candidate)
-
-        # Handle form submission
         if form_data["submitted"]:
             self._handle_form_submission(form_data, user, candidate)
-
-        # Render navigation
         self.renderer.render_navigation_buttons()
 
 
-# Preserve original function signatures - NO CHANGES to existing code needed
 def format_skills(job_types):
     """Wrapper function to maintain backward compatibility."""
     return SkillsFormatter.format_skills(job_types)

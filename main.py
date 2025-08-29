@@ -1,7 +1,8 @@
-# main.py
 import streamlit as st
 import os
 import base64
+from dotenv import load_dotenv
+
 from components.sidebar import render_sidebar
 from screens.home import home_page 
 from screens.auth_choice import auth_choice_page
@@ -21,20 +22,18 @@ from screens.my_job_postings import my_job_postings_page
 
 
 
+load_dotenv()
 
 class StyleManager:
     """Handles application styling and CSS management."""
     
     @staticmethod
     def apply_transparent_header():
-        """Apply transparent header styling."""
         transparent_header_style = """
         <style>
         .st-emotion-cache-1ffuo7c {
             background: transparent !important;
         }
-
-        /* Backup selectors in case the emotion class changes */
         [data-testid="stHeader"] {
             background: rgba(0,0,0,0) !important;
         }
@@ -59,14 +58,10 @@ class StyleManager:
                     filter: blur(13px) brightness(0.92);
                     pointer-events: none;
                 }}
-
-                /* keep Streamlit widgets transparent over the video */
                 .stApp, .block-container {{
                     background: transparent !important;
                 }}
-
-                /* Optional: sidebar background */
-                .css-1d391kg {{       /* auto-generated class name may differ on new Streamlit versions */
+                .css-1d391kg {{     
                     background-color: #f8f9fa;
                 }}
             </style>
@@ -78,19 +73,17 @@ class StyleManager:
             unsafe_allow_html=True,
         )
 
-
 class DatabaseService:
     """Handles database initialization and management."""
-    
     def __init__(self):
         self.config = {
-            'host': "localhost",
-            'user': "root",
-            'password': "root",
-            'db': "jobhub_db",
-            'port': 3306
+            'host': os.getenv("DB_HOST", "localhost"),
+            'user': os.getenv("DB_USER", "root"),
+            'password': os.getenv("DB_PASSWORD", "root"),
+            'db': os.getenv("DB_NAME", "jobhub_db"),
+            'port': int(os.getenv("DB_PORT", 3306)),
         }
-    
+
     def setup_database(self):
         """Initialize and setup database connection."""
         try:
@@ -103,13 +96,11 @@ class DatabaseService:
             st.error(f"Database connection failed: {e}")
             st.stop()
 
-
 class SessionStateManager:
     """Manages Streamlit session state initialization and defaults."""
     
     @staticmethod
     def ensure_session_defaults():
-        """Initialize session state with default values."""
         defaults = {
             "page": "home",
             "role": None,
@@ -171,7 +162,6 @@ class PageRouter:
         if page_name in self.routes:
             self.routes[page_name]()
         else:
-            # Fallback to home page for invalid routes
             st.session_state.page = "home"
             self.routes["home"]()
 
@@ -181,7 +171,6 @@ class ConfigurationManager:
     
     @staticmethod
     def configure_page():
-        """Set up Streamlit page configuration."""
         st.set_page_config(
             page_title="JobHub Portal",
             page_icon="💼",
@@ -195,7 +184,6 @@ class SidebarManager:
     
     @staticmethod
     def render_if_authenticated():
-        """Render sidebar only if user is authenticated."""
         if st.session_state.get("current_user"):
             render_sidebar()
 
@@ -212,7 +200,6 @@ class JobHubApp:
         self.config_manager = ConfigurationManager()
         self.sidebar_manager = SidebarManager()
         
-        # Initialize application
         self._initialize_app()
     
     def _initialize_app(self):
@@ -258,11 +245,9 @@ class ApplicationFactory:
     
     @staticmethod
     def create_app():
-        """Create and return a configured JobHub application instance."""
         return JobHubApp()
 
 
-# Application entry point
 if __name__ == "__main__":
     app = ApplicationFactory.create_app()
     app.run()

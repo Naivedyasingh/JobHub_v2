@@ -1,7 +1,5 @@
-# pages/signup.py
-
 import streamlit as st
-from utils.validation import validate_email, validate_phone, validate_password
+from utils.validation import validate_email, validate_phone, validate_password_detailed
 from utils.auth import next_user_id
 from db.models import User
 from datetime import datetime
@@ -85,25 +83,46 @@ class SignupValidator:
     @staticmethod
     def validate_form_data(form_data, role):
         """Validate all form data and return validation result and error message."""
-        required = [form_data['name'].strip(), form_data['phone'].strip(), 
-                   form_data['email'].strip(), form_data['password'].strip(), 
-                   form_data['confirm_password'].strip()]
+        # Clean all inputs first
+        name_clean = form_data['name'].strip()
+        phone_clean = form_data['phone'].strip()
+        email_clean = form_data['email'].strip()
+        pwd_clean = form_data['password'].strip()
+        cpwd_clean = form_data['confirm_password'].strip()
+        company_name_clean = form_data['company_name'].strip() if role == "hire" else ""
         
+        # Build required fields list
+        required = [name_clean, phone_clean, email_clean, pwd_clean, cpwd_clean]
         if role == "hire":
-            required.append(form_data['company_name'].strip())
+            required.append(company_name_clean)
         
-        if not all(required) or form_data['gender'] == "Select":
-            return False, "Please fill all required fields and select gender."
+        if not all(required):
+            # Show which specific field is empty
+            empty_fields = []
+            if not name_clean: empty_fields.append("Full Name")
+            if not phone_clean: empty_fields.append("Phone Number")
+            if not email_clean: empty_fields.append("Email")
+            if not pwd_clean: empty_fields.append("Password")
+            if not cpwd_clean: empty_fields.append("Confirm Password")
+            if role == "hire" and not company_name_clean: 
+                empty_fields.append("Company Name")
+            
+            return False, f"Please fill the following required fields: {', '.join(empty_fields)}"
+        elif form_data['gender'] == "Select":
+            return False, "Please select your gender."
         elif not form_data['agree']:
             return False, "You must accept the Terms and Conditions."
-        elif form_data['password'] != form_data['confirm_password']:
+        elif pwd_clean != cpwd_clean:
             return False, "Passwords do not match."
-        elif not validate_phone(form_data['phone']):
+        elif not validate_phone(phone_clean):
             return False, "Phone number must be exactly 10 digits."
-        elif not validate_email(form_data['email']):
+        elif not validate_email(email_clean):
             return False, "Invalid email address."
-        elif not validate_password(form_data['password']):
-            return False, "Password does not meet complexity requirements."
+        else:
+            # Password validation with specific error messages
+            is_valid, error_msg = validate_password_detailed(pwd_clean)
+            if not is_valid:
+                return False, error_msg
         
         return True, None
 
@@ -164,19 +183,16 @@ class SignupPage:
     
     def _handle_signup_attempt(self, form_data, role):
         """Process the signup attempt and handle the result."""
-        # Validate form data
         is_valid, error_message = self.validator.validate_form_data(form_data, role)
         if not is_valid:
             st.error(error_message)
             return
         
-        # Check for existing users
         existing_user = self.user_manager.check_existing_user(form_data['phone'], form_data['email'])
         if existing_user:
             st.error("Phone number or email already registered.")
             return
         
-        # Create new user
         next_id = self.user_manager.get_next_user_id()
         user_data = self.user_manager.create_user_data(form_data, role, next_id)
         created_user = self.user_manager.create_new_user(user_data)
@@ -191,25 +207,16 @@ class SignupPage:
     
     def display(self):
         """Main method to display the complete signup page."""
-        # Apply custom styles
         st.markdown(self.form_renderer.styles.get_custom_css(), unsafe_allow_html=True)
-        
-        # Render header
+
         self.form_renderer.render_header(st.session_state.role)
-        
-        # Render form fields
         form_data = self.form_renderer.render_form_fields(st.session_state.role)
         
-        # Handle signup button
         if st.button("🚀 Create Account", use_container_width=True, type="primary", key="signup_submit"):
             self._handle_signup_attempt(form_data, st.session_state.role)
-        
-        # Render action buttons
         self.form_renderer.render_action_buttons()
 
 
-# Preserve the original function signature - NO CHANGES to existing code needed
 def signup_page():
-    """Original function - now uses OOP internally but maintains exact same behavior."""
     page = SignupPage()
     page.display()

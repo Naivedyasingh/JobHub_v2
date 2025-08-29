@@ -2,3 +2,4 @@ streamlit
 streamlit-lottie
 mysql-connector-python
 pymysql
+python-dotenv

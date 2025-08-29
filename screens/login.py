@@ -1,5 +1,3 @@
-# pages/login.py
-
 import streamlit as st
 from utils.auth import authenticate
 
@@ -108,26 +106,20 @@ class LoginPage:
     
     def display(self):
         """Main method to display the complete login page."""
-        # Apply custom styles
         st.markdown(self.form_renderer.styles.get_custom_css(), unsafe_allow_html=True)
-        
-        # Render header
-        self.form_renderer.render_header(st.session_state.role)
-        
-        # Render form fields
+        self.form_renderer.render_header(st.session_state.role)   
         identifier, pwd = self.form_renderer.render_form_fields()
         
-        # Handle login button
-        if st.button("🚀 Login", key="login_submit", type="primary"):
-            self._process_login_attempt(identifier, pwd, st.session_state.role)
+        st.markdown("\n")
+        _, col, _ = st.columns([1.3, 2, 1])
+        with col:
+            if st.button("🚀 Login", key="login_submit", type="primary"):
+                self._process_login_attempt(identifier, pwd, st.session_state.role)
+
         
         st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Render action buttons
         self.form_renderer.render_action_buttons()
 
-
-# Preserve the original function signature - NO CHANGES to existing code needed
 def login_page():
     """Original function - now uses OOP internally but maintains exact same behavior."""
     page = LoginPage()

@@ -1,5 +1,3 @@
-# components/sidebar.py
-
 import streamlit as st
 from utils.auth import calculate_profile_completion, update_user_profile
 
@@ -61,7 +59,6 @@ class ProfileRenderer:
         current_status = user.get('availability_status', 'available')
         icon, color, text = self.status_manager.get_status_info(current_status)
 
-        # Render profile card
         st.markdown(f"""
         <div style="
             text-align: center;
@@ -85,13 +82,12 @@ class ProfileRenderer:
         </div>
         """, unsafe_allow_html=True)
 
-        # Status change selector
         self._render_status_changer(user, current_status)
     
     def render_employer_profile(self, user):
         """Render employer profile."""
         avatar = self.avatar_renderer.get_employer_avatar(user.get('gender'))
-        color = '#6c757d'  # Light gray color for employers
+        color = '#6c757d'  
         
         st.markdown(f"""
         <div style="
@@ -216,44 +212,32 @@ class SidebarRenderer:
     
     def render_sidebar(self):
         """Main method to render the complete sidebar."""
-        # Don't render anything for guests
         if st.session_state.current_user is None:
             return
 
         user = st.session_state.current_user
 
         with st.sidebar:
-            # Render user profile section
             if user['role'] == 'job':
                 self.profile_renderer.render_job_seeker_profile(user)
             else:
                 self.profile_renderer.render_employer_profile(user)
 
-            # Render profile completion
             self.completion_renderer.render_completion_indicator(user)
 
-            # Render navigation
             st.markdown("---")
             st.subheader("🧭 Navigation")
 
-            # Common navigation
             self.navigation_renderer.render_common_navigation(user)
 
-            # Role-specific navigation
             if user['role'] == 'job':
                 self.navigation_renderer.render_job_seeker_navigation()
             else:
                 self.navigation_renderer.render_employer_navigation()
 
-            # Footer navigation
             self.navigation_renderer.render_footer_navigation()
 
-
-# Create renderer instance for use by public function
 _sidebar_renderer = SidebarRenderer()
-
-
-# Public interface function - maintaining backward compatibility
 def render_sidebar():
     """Render the sidebar component."""
     _sidebar_renderer.render_sidebar()

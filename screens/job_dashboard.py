@@ -1,5 +1,3 @@
-# pages/job_dashboard.py
-
 import time
 import streamlit as st
 from datetime import datetime, timedelta
@@ -65,7 +63,6 @@ class HiredNotificationManager:
             job_id = app.get('job_id', 0)
             app_id = app.get('id', 0)
             
-            # ← FIXED: Check database instead of session state
             if not self.storage.is_dismissed(user_id, job_id, app_id):
                 response_date = app.get("response_date")
                 if response_date:
@@ -77,8 +74,7 @@ class HiredNotificationManager:
                         
                         time_diff = datetime.now() - response_dt
                         
-                        # Only show if accepted recently (within 7 days) and not dismissed
-                        if time_diff.total_seconds() <= 7 * 24 * 3600:  # Within 7 days
+                        if time_diff.total_seconds() <= 7 * 24 * 3600:  
                             new_accepted.append({
                                 'job_title': app.get('job_title', 'Job Position'),
                                 'employer_name': app.get('employer_name', 'Employer'),
@@ -98,23 +94,18 @@ class HiredNotificationManager:
         if not accepted_jobs:
             return
         
-        # Show popup for each job that hasn't been dismissed
         for idx, job in enumerate(accepted_jobs):
             job_title = job['job_title']
             employer_name = job['employer_name']
             job_id = job.get('job_id', 0)
             app_id = job.get('application_id', 0)
             
-            # Format time display
             if job['days_ago'] > 0:
                 time_text = f"{job['days_ago']} day{'s' if job['days_ago'] > 1 else ''} ago"
             elif job['hours_ago'] > 0:
                 time_text = f"{job['hours_ago']} hour{'s' if job['hours_ago'] > 1 else ''} ago"
             else:
                 time_text = f"{job['minutes_ago']} minute{'s' if job['minutes_ago'] > 1 else ''} ago"
-            
-            # Create celebration popup
-            st.balloons()  # Show balloons animation
             
             with st.container():
                 st.markdown(f"""
@@ -127,7 +118,6 @@ class HiredNotificationManager:
                         color: white;
                         box-shadow: 0 10px 30px rgba(0,0,0,0.3);
                         border: 3px solid #ffd700;
-                        animation: pulse 2s infinite;
                         position: relative;
                     ">
                         <h1 style="margin: 0; font-size: 2.5rem;">🎉 CONGRATULATIONS! 🎉</h1>
@@ -144,17 +134,9 @@ class HiredNotificationManager:
                             <small style="color: #ffd700;">💡 This notification will not appear again after dismissal</small>
                         </div>
                     </div>
-                    
-                    <style>
-                    @keyframes pulse {{
-                        0% {{ transform: scale(1); }}
-                        50% {{ transform: scale(1.05); }}
-                        100% {{ transform: scale(1); }}
-                    }}
-                    </style>
                 """, unsafe_allow_html=True)
+
                 
-                # Dismissal button with permanent database storage
                 col1, col2, col3 = st.columns([1, 2, 1])
                 with col2:
                     unique_key = f"dismiss_congrats_{job_id}_{app_id}_{idx}"
@@ -163,7 +145,6 @@ class HiredNotificationManager:
                                use_container_width=True, 
                                type="primary",
                                key=unique_key):
-                        # ← FIXED: Store dismissal in database permanently
                         if self.storage.mark_dismissed(user_id, job_id, app_id):
                             st.success("✅ Congratulations noted! This notification won't appear again.")
                             time.sleep(1)
@@ -214,7 +195,6 @@ class JobDataManager:
         jobs: List[Dict] = []
         for r in rows:
             job = dict(r)
-            # Unify key names with the old JSON structure
             job["job_types"] = [job.get("job_type")] if job.get("job_type") else []
             job["posted_date"] = job.get("posted_date").isoformat() if job.get("posted_date") else ""
             job["employer_info"] = {
@@ -235,15 +215,13 @@ class JobOfferManager:
     
     def is_offer_active(self, offer):
         """Return True while an offer is within its 24-hour window."""
-        # First try expires_at if it exists
         if offer.get("expires_at"):
             try:
                 expires = datetime.fromisoformat(str(offer["expires_at"]))
                 return datetime.now() <= expires
             except Exception:
-                pass  # bad format → compute fallback
+                pass  
 
-        # Fallback: use offered_date + 24 hours
         if offer.get("offered_date"):
             try:
                 base = datetime.fromisoformat(str(offer["offered_date"]))
@@ -251,7 +229,6 @@ class JobOfferManager:
             except Exception:
                 pass
 
-        # If both are missing/invalid, consider expired
         return False
     
     def get_active_offers_for_user(self, user_id):
@@ -276,10 +253,10 @@ class JobOfferManager:
                 base = datetime.fromisoformat(str(offer["offered_date"]))
                 expires = base + timedelta(hours=24)
             except Exception:
-                expires = datetime.now()  # fallback
+                expires = datetime.now()  
         
         if not expires:
-            expires = datetime.now()  # fallback
+            expires = datetime.now()  
             
         return max(0, int((expires - datetime.now()).total_seconds() // 3600))
 
@@ -510,7 +487,6 @@ class JobDashboardRenderer:
             [f"🟢 Available Jobs ({len(not_applied_jobs)})", f"✅ Applied Jobs ({len(applied_jobs)})"]
         )
 
-        # Available jobs tab
         with tab_avail:
             if not_applied_jobs:
                 for idx, job in enumerate(not_applied_jobs):
@@ -534,7 +510,6 @@ class JobDashboardRenderer:
             else:
                 st.info("🎉 No new jobs available to apply for!")
 
-        # Applied jobs tab
         with tab_applied:
             if applied_jobs:
                 for idx, job in enumerate(applied_jobs):
@@ -560,53 +535,38 @@ class JobDashboard:
         user = st.session_state.current_user
         completion = calculate_profile_completion(user)
 
-        # Show congratulations popup first (only for new hires that haven't been dismissed)
         self.renderer.render_congratulations_section(user["id"])
 
-        # Render header
         self.renderer.render_header(user)
 
-        # Check profile completion
         if self.renderer.render_profile_completion_warning(completion):
             return
 
-        # Render active offers
         self.renderer.render_active_offers(user)
 
-        # Get and validate jobs data
         all_jobs = self.data_manager.fetch_employer_jobs()
         if not all_jobs:
             st.info("📭 No job postings available at the moment. Please check back later!")
             return
-
-        # Render filters and get filter values
+        
         location_filter, selected_cat_lower, company_filter, salary_range = self.renderer.render_job_filters(all_jobs)
 
-        # Apply filters
         filtered_jobs = self.filter_manager.apply_filters(
             all_jobs, location_filter, selected_cat_lower, company_filter, salary_range
         )
 
         st.info(f"**Found {len(filtered_jobs)} job(s) matching your filters**")
 
-        # Split jobs by application status
         applied_set = self.application_manager.get_applied_jobs_set(user["id"])
         applied_jobs, not_applied_jobs = self.application_manager.split_jobs_by_application_status(
             filtered_jobs, applied_set
         )
 
-        # Render job tabs
         self.renderer.render_job_tabs(applied_jobs, not_applied_jobs, user)
 
 # Preserve original function signatures - NO CHANGES to existing code needed
 def format_user_skills(job_types):
-    """Wrapper function to maintain backward compatibility."""
     return JobSkillsFormatter.format_user_skills(job_types)
-
-def _fetch_employer_jobs() -> List[Dict]:
-    """Wrapper function to maintain backward compatibility."""
-    manager = JobDataManager()
-    return manager.fetch_employer_jobs()
 
 def job_dashboard():
     """Original function - now uses OOP internally but maintains exact same behavior."""

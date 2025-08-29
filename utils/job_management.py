@@ -1,5 +1,3 @@
-# utils/job_management.py
-
 from datetime import datetime
 from db.models import JobPosting, Application
 import streamlit as st
@@ -16,7 +14,6 @@ class JobManager:
         try:
             all_posts = list(self.job_model.list_by_user(employer_id))
             
-            # Filter out deleted posts unless specifically requested
             if not include_deleted:
                 posts = [post for post in all_posts if post.get('status', 'active') != 'deleted']
             else:

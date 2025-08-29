@@ -1,9 +1,3 @@
-# pages/my_applications.py
-# ---------------------------------------------------
-# Streamlit page: "My Applications & Offers"
-# Safe version – handles NULL status, dates, etc.
-# ---------------------------------------------------
-
 import streamlit as st
 from utils.applications import get_job_applications
 from utils.offers import get_job_offers, update_offer_status
@@ -31,11 +25,11 @@ class DateTimeHelper:
         if value is None:
             return datetime.now()
         if isinstance(value, datetime):
-            return value  # Already a datetime object
+            return value  
         try:
             return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
         except:
-            return datetime.now()  # Fallback
+            return datetime.now()
 
 
 class StatusRenderer:
@@ -171,7 +165,6 @@ class MyApplicationsRenderer:
                 unsafe_allow_html=True,
             )
 
-            # Buttons side by side using columns
             if offer.get("status") == "pending" and not is_expired:
                 btn_col1, btn_col2 = st.columns(2)
                 with btn_col1:
@@ -228,18 +221,15 @@ class MyApplicationsRenderer:
     def render_applications_tab(self, my_applications, data_manager):
         """Render the applications tab content."""
         if my_applications:
-            # Render filters
             col1, col2 = st.columns(2)
             with col1:
                 status_filter = st.selectbox("Filter by Status", ["All", "Pending", "Accepted", "Rejected"])
             with col2:
                 sort_by = st.selectbox("Sort By", ["Date Applied", "Company", "Job Title"])
 
-            # Apply filters and sorting
             filtered = data_manager.filter_applications_by_status(my_applications, status_filter)
             filtered = data_manager.sort_applications(filtered, sort_by)
 
-            # Render cards
             for i in range(0, len(filtered), 2):
                 cols = st.columns(2, gap="large")
                 self.render_application_card(filtered[i], cols[0])
@@ -262,21 +252,15 @@ class MyApplicationsPage:
     def display(self):
         """Main method to display the complete my applications page."""
         user = st.session_state.current_user
-
-        # Render header and styles
         self.renderer.render_header()
         self.renderer.render_custom_styles()
 
-        # Get data
         my_applications = self.data_manager.get_user_applications(user["id"])
         my_offers = self.data_manager.get_user_offers(user["id"])
 
-        # Create tabs
         tab_offers, tab_apps = st.tabs(
             [f"💼 Job Offers ({len(my_offers)})", f"📤 My Applications ({len(my_applications)})"]
         )
-
-        # Render tabs content
         with tab_offers:
             self.renderer.render_offers_tab(my_offers)
 

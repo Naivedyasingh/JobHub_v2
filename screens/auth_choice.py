@@ -1,5 +1,3 @@
-# auth_choice.py
-
 import streamlit as st
 from streamlit_lottie import st_lottie
 import json
@@ -41,8 +39,6 @@ class AuthChoicePage:
             </p>
         </div>
         """, unsafe_allow_html=True)
-
-        # Load and display Lottie animation above the buttons
         lottie = self.lottie_loader.load_lottie("D:\\JobHub\\.streamlit\\public\\Login.json")  
         _, col2, _ = st.columns([1, 2, 1])
         with col2:
@@ -66,17 +62,13 @@ class AuthChoicePage:
                 st.rerun()
 
         st.markdown("<br>\n", unsafe_allow_html=True)
-
-        # Increase column width and use container width
-        _, back_col, _ = st.columns([4, 8, 4])  # Wider middle column
+        _, back_col, _ = st.columns([4, 8, 4]) 
         with back_col:
             if st.button("← Back", use_container_width=True, type="secondary"):
                 st.session_state.page = "home"
                 st.session_state.role = None
                 st.rerun()
 
-
-# Preserve the original function signature - NO CHANGES to existing code needed
 def load_lottie(filepath: str):
     """Wrapper function to maintain backward compatibility."""
     return LottieLoader.load_lottie(filepath)

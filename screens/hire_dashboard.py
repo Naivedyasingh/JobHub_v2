@@ -1,5 +1,3 @@
-# pages/hire_dashboard.py
-
 import streamlit as st
 from datetime import datetime
 from utils.applications import get_job_applications
@@ -94,7 +92,6 @@ class HireDashboardRenderer:
             for app in recent_applications:
                 self.render_application_card(app)
                 
-            # Show more button
             if len(recent_applications) >= 3:
                 if st.button("📋 View All Applications", use_container_width=True):
                     st.session_state.page = "view_applications"
@@ -132,17 +129,16 @@ class HireDataManager:
         }
     
     def safe_date_key(self, application):
-        """Return a datetime for sorting, with None converted to epoch (oldest possible)"""
+        """Return a datetime for sorting, with None converted """
         date_val = application.get("applied_date")
         if date_val is None:
-            return datetime.min  # Very old date so None values sort to the end
+            return datetime.min  
         if isinstance(date_val, datetime):
             return date_val
         try:
-            # Try to parse string dates
             return datetime.fromisoformat(str(date_val))
         except:
-            return datetime.min  # Fallback for unparseable dates
+            return datetime.min 
     
     def get_recent_applications(self, applications, limit=3):
         """Get recent applications sorted by date."""
@@ -162,38 +158,29 @@ class HireDashboard:
     def display(self):
         """Main method to display the complete hire dashboard."""
         user = st.session_state.current_user
-        completion = calculate_profile_completion(user)
+        # completion = calculate_profile_completion(user)
 
-        # Render header
         self.renderer.render_header(user)
-
-        # Render quick actions
         self.renderer.render_quick_actions()
 
         st.markdown("---")
 
-        # Get data for dashboard
         my_applications = self.data_manager.get_employer_applications(user["id"])
         my_jobs = self.data_manager.get_employer_jobs(user["id"])
         
-        # Calculate stats
         app_stats = self.data_manager.calculate_application_stats(my_applications)
         stats_data = {
             'jobs_posted': len(my_jobs),
             **app_stats
         }
 
-        # Render company stats
         self.renderer.render_company_stats(stats_data)
 
         st.markdown("---")
 
-        # Get recent applications and render them directly (no tabs)
         recent_applications = self.data_manager.get_recent_applications(my_applications)
         self.renderer.render_recent_applications_section(recent_applications)
 
-# Preserve the original function signature - NO CHANGES to existing code needed
 def hire_dashboard():
-    """Original function - now uses OOP internally but maintains exact same behavior."""
     dashboard = HireDashboard() 
     dashboard.display()

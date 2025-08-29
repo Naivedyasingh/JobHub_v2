@@ -1,5 +1,3 @@
-# pages/home.py
-
 import streamlit as st
 from db.models import User
 
@@ -157,10 +155,8 @@ class HomePage:
         <hr style="width: 100%; height: 2px; background-color: #444; border: none; margin: 1.5rem 0; border-radius: 2px;">
         """, unsafe_allow_html=True)
         
-        # Get platform statistics from database
         job_seekers_count, employers_count, cities_count, skills_count = self.platform_stats.get_stats()
         
-        # Platform Impact Statistics
         st.markdown("### 📊 **Platform Impact**")
         col1, col2, col3, col4 = st.columns(4)
         stats = [
@@ -212,7 +208,7 @@ class HomePage:
         """, unsafe_allow_html=True)
         st.markdown("""
         <div style='text-align: center; color: #333; font-size: 0.9rem;'>
-            💡 <strong>Why Choose JobConnect?</strong><br>
+            💡 <strong>Why Choose JobHub?</strong><br>
             ✅ Verified profiles • 🔒 Secure platform • 💰 Fair pricing • ⭐ Quality assurance<br>
             🤝 Personalized support • 🧑‍💻 Easy job posting & application • ⚡ Fast response times<br><br>
             <span style='font-size: 1.1rem; color: #2c3e50; font-weight: 600;'>

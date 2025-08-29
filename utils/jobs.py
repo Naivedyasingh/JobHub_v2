@@ -1,7 +1,7 @@
-# utils/jobs.py
-
 import streamlit as st
 from db.models import JobPosting, JobDAO
+from utils.offers import get_job_offers as get_offers
+
 
 class JobOfferService:
     """Service for handling job offer operations."""
@@ -9,7 +9,6 @@ class JobOfferService:
     @staticmethod
     def get_job_offers():
         """Get job offers using the offers utility."""
-        from utils.offers import get_job_offers as get_offers
         return get_offers()
 
 class JobDataValidator:
@@ -75,17 +74,7 @@ class JobPostingService:
         self.session_manager = SessionStateManager()
     
     def add_job_posting(self, employer_id, job_data):
-        """
-        Add a new job posting for employer using JobDAO.
         
-        Args:
-            employer_id: ID of the employer posting the job
-            job_data: Dictionary containing job posting data
-        
-        Returns:
-            bool: True if successful, False otherwise
-        """
-        # Validate inputs
         if not self.validator.validate_employer_id(employer_id):
             return False
         
@@ -93,17 +82,13 @@ class JobPostingService:
             return False
         
         try:
-            # Sanitize and prepare job data
             sanitized_data = self.processor.sanitize_job_data(job_data)
             payload = self.processor.prepare_job_payload(employer_id, sanitized_data)
             
-            # Create JobDAO instance and insert job
             job_dao = JobDAO()
-            # ← ONLY CHANGE: Fixed the method call to pass both arguments
             result = job_dao.insert_job(employer_id, payload)
             
             if result:
-                # Update session state with current user
                 self.session_manager.update_current_user(employer_id, job_dao)
                 return True
             
@@ -128,10 +113,8 @@ class JobUtilityService:
         """Add job posting."""
         return self.posting_service.add_job_posting(employer_id, job_data)
 
-# Create service instance for use by public functions
 _job_service = JobUtilityService()
 
-# Public interface functions - maintaining backward compatibility
 def get_job_offers():
     """Get job offers using the offers utility."""
     return _job_service.get_offers()

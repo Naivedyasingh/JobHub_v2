@@ -1,5 +1,3 @@
-# pages/profile.py
-
 import streamlit as st
 from utils.auth import calculate_profile_completion, update_user_profile
 from utils.validation import validate_email, validate_phone, validate_aadhaar
@@ -270,7 +268,6 @@ class ProfileManager:
             if updated_user:
                 st.session_state.current_user = updated_user
                 st.success("✅ Profile saved successfully!")
-                st.balloons()
                 st.rerun()
                 return True
             else:
@@ -320,7 +317,6 @@ class JobSeekerProfile:
         with tab3:
             location_data = self.form_renderer.render_location_contact_tab(user)
         
-        # Save button
         if st.button("💾 Save Profile", type="primary", use_container_width=True, key="save_job_profile"):
             profile_data = {**personal_data, **professional_data, **location_data}
             self.profile_manager.save_job_seeker_profile(user['id'], profile_data)
@@ -346,7 +342,6 @@ class EmployerProfile:
         with tab3:
             location_data = self.form_renderer.render_location_tab(user)
         
-        # Save button
         if st.button("💾 Save Profile", type="primary", use_container_width=True, key="save_employer_profile"):
             profile_data = {**personal_data, **company_data, **location_data}
             self.profile_manager.save_employer_profile(user['id'], profile_data)

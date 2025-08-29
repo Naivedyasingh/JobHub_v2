@@ -1,5 +1,3 @@
-# utils/offers.py
-
 from datetime import datetime, timedelta
 from db.models import JobOffer
 
@@ -68,15 +66,12 @@ class OfferDataProcessor:
         """Add default fields to offer data if not present."""
         processed = offer_data.copy()
         
-        # Set default status if not provided
         if 'status' not in processed:
             processed['status'] = 'pending'
         
-        # Set offered_date to current datetime if not provided
         if 'offered_date' not in processed:
             processed['offered_date'] = datetime.now()
         
-        # Set expiry date if not provided (24 hours from now)
         if 'expires_at' not in processed:
             processed['expires_at'] = datetime.now() + timedelta(hours=24)
         
@@ -111,12 +106,6 @@ class OfferService:
         self.processor = OfferDataProcessor()
     
     def get_all_offers(self):
-        """
-        Get all job offers.
-        
-        Returns:
-            list: List of job offers, empty list if error
-        """
         try:
             return self.repository.get_all_offers()
         except Exception as e:
@@ -124,25 +113,13 @@ class OfferService:
             return []
     
     def save_offer(self, offer_data):
-        """
-        Save a job offer with validation and processing.
-        
-        Args:
-            offer_data: Dictionary containing job offer data
-            
-        Returns:
-            bool: True if successful, False otherwise
-        """
         try:
-            # Validate offer data
             if not self.validator.validate_offer_data(offer_data):
                 return False
             
-            # Sanitize and process data
             sanitized_data = self.processor.sanitize_offer_data(offer_data)
             processed_data = self.processor.add_default_fields(sanitized_data)
             
-            # Save to database
             new_id = self.repository.create_offer(processed_data)
             return new_id is not None and new_id > 0
             
@@ -151,29 +128,15 @@ class OfferService:
             return False
     
     def update_status(self, offer_id, status, response_message=""):
-        """
-        Update job offer status with validation.
-        
-        Args:
-            offer_id: ID of the offer to update
-            status: New status for the offer
-            response_message: Optional response message
-            
-        Returns:
-            bool: True if successful, False otherwise
-        """
         try:
-            # Validate inputs
             if not self.validator.validate_offer_id(offer_id):
                 return False
             
             if not self.validator.validate_status(status):
                 return False
             
-            # Sanitize response message
             sanitized_message = response_message.strip() if isinstance(response_message, str) else ""
             
-            # Update in database
             rows_affected = self.repository.update_offer_status(offer_id, status, sanitized_message)
             return rows_affected > 0
             
@@ -182,11 +145,8 @@ class OfferService:
             return False
 
 
-# Create service instance for use by public functions
 _offer_service = OfferService()
 
-
-# Public interface functions - maintaining backward compatibility
 def get_job_offers():
     """Get all job offers using ORM model."""
     return _offer_service.get_all_offers()

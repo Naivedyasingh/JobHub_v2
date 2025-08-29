@@ -15,7 +15,6 @@ class MyJobPostingsPage:
             st.rerun()
             return
         
-        # Page header (NO back button here)
         st.title("📊 My Job Posts")
         st.markdown("---")
         
@@ -28,7 +27,6 @@ class MyJobPostingsPage:
                     st.session_state.page = "post_job"
                     st.rerun()
             else:
-                # Enhanced header with stats
                 col1, col2, col3 = st.columns([2, 1, 1])
                 with col1:
                     st.markdown(f"### 📋 Your Job Postings ({len(posts)} total)")
@@ -40,7 +38,6 @@ class MyJobPostingsPage:
                                                  ["All Posts", "Open", "Closed", "Filled"],
                                                  key="posts_filter")
                 
-                # Filter
                 if filter_option == "Open":
                     posts = [p for p in posts if p['post_status'] in ['open', 'partially_filled']]
                 elif filter_option == "Closed":
@@ -57,7 +54,6 @@ class MyJobPostingsPage:
         except Exception as e:
             st.error(f"❌ Error loading job posts: {str(e)}")
         
-        # Back button at end
         st.markdown("---")
         if st.button("← Back to Dashboard", use_container_width=True, key="back_to_dashboard_final"):
             st.session_state.page = "hire_dashboard"
@@ -276,6 +272,5 @@ class MyJobPostingsPage:
             st.error(message)
 
 
-# Function to call page
 def my_job_postings_page():
     MyJobPostingsPage().render()
