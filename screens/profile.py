@@ -1,6 +1,6 @@
 import streamlit as st
-from utils.auth import calculate_profile_completion, update_user_profile
-from utils.validation import validate_email, validate_phone, validate_aadhaar
+from utils.auth import  update_user_profile
+from utils.validation import  validate_phone, validate_aadhaar
 
 
 class ProfileDataProcessor:

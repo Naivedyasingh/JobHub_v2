@@ -7,8 +7,9 @@ from utils.applications import (
 )
 from utils.offers import get_job_offers, update_offer_status
 from utils.auth import calculate_profile_completion
-from db.models import User, JobPosting
+from db.models import User
 from typing import List, Dict
+import json
 
 class CongratsStorage:
     """Handles permanent storage of congratulations dismissals in database."""
@@ -162,7 +163,6 @@ class JobSkillsFormatter:
         """Helper function to properly format job_types for application"""
         if isinstance(job_types, str):
             try:
-                import json
                 job_types = json.loads(job_types)
             except:
                 job_types = [s.strip() for s in job_types.split(",") if s.strip()]
@@ -564,11 +564,9 @@ class JobDashboard:
 
         self.renderer.render_job_tabs(applied_jobs, not_applied_jobs, user)
 
-# Preserve original function signatures - NO CHANGES to existing code needed
 def format_user_skills(job_types):
     return JobSkillsFormatter.format_user_skills(job_types)
 
 def job_dashboard():
-    """Original function - now uses OOP internally but maintains exact same behavior."""
     dashboard = JobDashboard()
     dashboard.display()

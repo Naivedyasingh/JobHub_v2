@@ -1,5 +1,3 @@
-# pages/post_job.py
-
 import time
 from datetime import datetime
 import streamlit as st

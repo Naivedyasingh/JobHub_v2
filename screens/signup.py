@@ -83,25 +83,24 @@ class SignupValidator:
     @staticmethod
     def validate_form_data(form_data, role):
         """Validate all form data and return validation result and error message."""
-        # Clean all inputs first
         name_clean = form_data['name'].strip()
         phone_clean = form_data['phone'].strip()
         email_clean = form_data['email'].strip()
+        gender_clean=form_data['gender'].strip()
         pwd_clean = form_data['password'].strip()
         cpwd_clean = form_data['confirm_password'].strip()
         company_name_clean = form_data['company_name'].strip() if role == "hire" else ""
         
-        # Build required fields list
         required = [name_clean, phone_clean, email_clean, pwd_clean, cpwd_clean]
         if role == "hire":
             required.append(company_name_clean)
         
         if not all(required):
-            # Show which specific field is empty
             empty_fields = []
             if not name_clean: empty_fields.append("Full Name")
             if not phone_clean: empty_fields.append("Phone Number")
             if not email_clean: empty_fields.append("Email")
+            if not gender_clean: empty_fields.append("Gender")
             if not pwd_clean: empty_fields.append("Password")
             if not cpwd_clean: empty_fields.append("Confirm Password")
             if role == "hire" and not company_name_clean: 
@@ -119,7 +118,6 @@ class SignupValidator:
         elif not validate_email(email_clean):
             return False, "Invalid email address."
         else:
-            # Password validation with specific error messages
             is_valid, error_msg = validate_password_detailed(pwd_clean)
             if not is_valid:
                 return False, error_msg

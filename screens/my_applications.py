@@ -90,7 +90,7 @@ class ApplicationsDataManager:
                     return datetime.min
             elif sort_by == "Company":
                 return a.get("employer_name") or ""
-            else:  # Job Title
+            else:  
                 return a.get("job_title") or ""
         
         return sorted(
@@ -285,6 +285,5 @@ def render_status(status: str, expired: bool = False):
 
 
 def my_applications_page() -> None:
-    """Original function - now uses OOP internally but maintains exact same behavior."""
     page = MyApplicationsPage()
     page.display()

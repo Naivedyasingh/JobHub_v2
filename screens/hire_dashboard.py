@@ -1,7 +1,6 @@
 import streamlit as st
 from datetime import datetime
 from utils.applications import get_job_applications
-from utils.auth import calculate_profile_completion
 from db.models import JobPosting
 
 class HireDashboardRenderer:
@@ -158,8 +157,6 @@ class HireDashboard:
     def display(self):
         """Main method to display the complete hire dashboard."""
         user = st.session_state.current_user
-        # completion = calculate_profile_completion(user)
-
         self.renderer.render_header(user)
         self.renderer.render_quick_actions()
 

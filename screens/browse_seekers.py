@@ -24,25 +24,17 @@ class SkillsProcessor:
     
     @staticmethod
     def split_skills(value):
-        """
-        Return a clean list of skills regardless of the stored format.
-        • JSON list → list
-        • comma-separated string → list
-        • already a list → list
-        """
         if value is None:
             return []
         if isinstance(value, list):
             return value
         if isinstance(value, str):
-            # handle JSON-encoded list first
             try:
                 parsed = json.loads(value)
                 if isinstance(parsed, list):
                     return parsed
             except Exception:
                 pass
-            # fall back to comma-separated text
             return [s.strip() for s in value.split(",") if s.strip()]
         return []
 

@@ -399,7 +399,7 @@ class ApplicationGenerator:
         self.model = application_model
     
     def stream_by_status(self, status):
-        """Generator to yield applications by status one at a time - Memory efficient."""
+        """Generator to yield applications by status."""
         all_apps = self.model.stream_all()
         for app in all_apps:
             if app.get('status') == status:
@@ -490,7 +490,6 @@ class JobDAO:
         user_model = User()
         return user_model.get(user_id)
 
-# Utility functions for common database operations
 def get_user_by_credentials(email_or_phone: str, password: str) -> dict:
     """Get user by login credentials."""
     user_model = User()

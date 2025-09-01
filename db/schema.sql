@@ -55,6 +55,12 @@ CREATE TABLE IF NOT EXISTS job_postings (
     posted_date DATETIME,
     status VARCHAR(20),
     applications_count INT,
+    required_candidates INT,
+    hired_count INT,
+    is_closed TINYINT(1),
+    auto_closed TINYINT(1),
+    closed_date DATETIME,
+
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

@@ -212,7 +212,7 @@ class ApplicationGridRenderer:
                 with col:
                     self.render_application_card(app, show_actions, data_manager)
 
-            if len(apps[i:i + 2]) == 1:  # keep row heights even
+            if len(apps[i:i + 2]) == 1:  
                 with cols[1]:
                     st.markdown("<div style='height:250px'></div>", unsafe_allow_html=True)
 
@@ -292,6 +292,5 @@ def display_card(app: dict, show_actions: bool) -> None:
     grid_renderer.render_application_card(app, show_actions, data_manager)
 
 def view_applications_page() -> None:
-    """Original function - now uses OOP internally but maintains exact same behavior."""
     page = ViewApplicationsPage()
     page.display()

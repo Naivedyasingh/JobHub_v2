@@ -16,12 +16,10 @@ class OfferDataValidator:
             'salary_offered', 'location'
         ]
         
-        # Check required fields exist and are not None/empty
         for field in required_fields:
             if field not in offer_data or not offer_data[field]:
                 return False
         
-        # Validate specific field types
         if not isinstance(offer_data['employer_id'], int) or offer_data['employer_id'] <= 0:
             return False
         
